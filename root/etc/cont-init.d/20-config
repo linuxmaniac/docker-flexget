@@ -15,7 +15,7 @@ else
 fi
 
 # install custom plugins
-if [[ ! -z "${FG_PLUGINS}" ]]; then
+if [[ -n "${FG_PLUGINS}" ]]; then
   mkdir -p /config/plugins
   for plugin_name in ${FG_PLUGINS}; do
     plugin_src="/defaults/plugins/${plugin_name}.py"
@@ -36,10 +36,14 @@ if [[ ! -z "${FG_PLUGINS}" ]]; then
 fi
 
 # set FG_WEBUI_PASSWD
-if [[ ! -z "${FG_WEBUI_PASSWD}" ]]; then
+if [[ -n "${FG_WEBUI_PASSWD}" ]]; then
   echo "*** Setting flexget web password"
-  if ! flexget -c /config/config.yml --loglevel ERROR web passwd "${FG_WEBUI_PASSWD}" | \
-    tee /dev/stderr | grep -q 'Updated password'; then
+  RESULT=/tmp/flexget_web.txt
+  timeout 25 flexget -c /config/config.yml \
+    --loglevel "${FG_LOG_LEVEL:-ERROR}" \
+    --logfile "${FG_LOG_FILE:-flexget.log}" \
+    web passwd "${FG_WEBUI_PASSWD}" | tee ${RESULT}
+  if ! grep -q "Updated password" ${RESULT}; then
     exit 1
   fi
 fi
